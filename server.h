@@ -13,7 +13,7 @@ class Server{
         Server(int port = 8080); // Default port
         bool startServer();
         void shutdownServer();
-
+        void handleClient(int clientSocket);
         static void handleSignal(int signal);
 };
 

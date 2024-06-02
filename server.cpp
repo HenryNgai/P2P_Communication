@@ -3,6 +3,7 @@
 #include <arpa/inet.h> // For socket functions and structures
 #include <unistd.h>    // For close function
 #include <csignal>     // For signal handling
+#include <thread>
 #include "server.h"
 
 // Global pointer to the server instance for signal handling
@@ -13,7 +14,7 @@ Server::Server(int port) : PORT(port), serverSocket(-1){
 };
 
 bool Server::startServer(){
-    int serverSocket = socket(AF_INET, SOCK_STREAM, 0); // 2 way TCP Connection
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0); // 2 way TCP Connection
     if (serverSocket == -1){
         std::cout << "Failed to create socket\n";
         return false;
@@ -47,12 +48,16 @@ bool Server::startServer(){
         socklen_t clientAddressLen = sizeof(clientAddress);
         
         int clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientAddressLen);
+
         // Convert the client's IP address and port to a readable format
         char clientIP[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(clientAddress.sin_addr), clientIP, INET_ADDRSTRLEN);
         std::cout<< "New Connection from IP:" << clientAddress.sin_addr.s_addr << " PORT " << clientAddress.sin_port << std::endl;
-    }
 
+        std::thread clientThread (&Server::handleClient,this, clientSocket);
+        clientThread.detach();        
+    }
+    return true;
 }
 
 // Static signal handler function
@@ -67,4 +72,27 @@ void Server::shutdownServer() {
     std::cout << "Received signal, shutting down server." << std::endl;
     close(serverSocket);
     exit(EXIT_SUCCESS);
+}
+
+// Process incoming connection
+void Server::handleClient(int clientSocket){
+    char buffer[1024];
+    while(true){
+        memset(buffer, 0, sizeof(buffer)); // Zero out buffer
+        int bytesRead = read(clientSocket, buffer, sizeof(buffer));\
+        if (bytesRead < 0){
+            std::cout<<"Error reading from client socket"<<std::endl;
+            close(clientSocket);
+            return;
+        }
+        else if (bytesRead == 0){
+            std::cout<<"Client disconnected"<<std::endl;
+            close(clientSocket);
+            return;
+        }
+        else{
+            std::cout<< "Received Message: " << buffer <<std::endl;
+        }
+    }
+    close(clientSocket);
 }
