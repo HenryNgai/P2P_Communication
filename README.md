@@ -5,7 +5,7 @@ Minimalistic application that allows anyone on the same network to discover and 
 
 ## Features
 
-- Handle incoming requests (Multithread)
+- Handle incoming requests (Multithread) :heavy_check_mark:
 - Handle outcoing messages
 - Discovery mechanism
 - Encryption..?
