@@ -38,7 +38,16 @@ bool Server::startServer(){
         std::cout << "Failed to listen on binded socket"<< std::endl;
         return false;
     }
-    std::cout <<"Listening on port " << PORT << std::endl;
+    sockaddr_in localAddress;
+    socklen_t addressLength = sizeof(localAddress);
+    if (getsockname(serverSocket, (struct sockaddr*)&localAddress, &addressLength) == -1) { // Get address that socket is bound to
+        std::cout<<"getsockname failed, please check to ensure server is running" << std::endl;
+    }
+    else{
+        char ip [INET_ADDRSTRLEN]; // char array with length INET_ADDRSTRLEN
+        inet_ntop(AF_INET, &localAddress.sin_addr, ip, sizeof(ip)); // Convert to human readable text
+        std::cout << "Server running on IP: " << ip << " Port: " << ntohs(localAddress.sin_port) << std::endl;
+    }
 
     // Set up the signal handler for graceful shutdown
     std::signal(SIGINT, handleSignal);
@@ -48,6 +57,8 @@ bool Server::startServer(){
         socklen_t clientAddressLen = sizeof(clientAddress);
         
         int clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientAddressLen);
+        std::lock_guard<std::mutex> lock(clientSocketsMutex); // Lock 
+        clientSockets.push_back(clientSocket); // Add to clientSockets vector
 
         // Convert the client's IP address and port to a readable format
         char clientIP[INET_ADDRSTRLEN];
@@ -83,11 +94,17 @@ void Server::handleClient(int clientSocket){
         if (bytesRead < 0){
             std::cout<<"Error reading from client socket"<<std::endl;
             close(clientSocket);
+            std::lock_guard<std::mutex> lock(clientSocketsMutex); //Lock clientSockets vector
+            // Fancy hack to remove specific clientSocket from clientSocket Vector
+            clientSockets.erase(std::remove(clientSockets.begin(), clientSockets.end(), clientSocket), clientSockets.end()); 
             return;
         }
         else if (bytesRead == 0){
             std::cout<<"Client disconnected"<<std::endl;
             close(clientSocket);
+            std::lock_guard<std::mutex> lock(clientSocketsMutex); //Lock clientSockets vector
+            // Fancy hack to remove specific clientSocket from clientSocket Vector
+            clientSockets.erase(std::remove(clientSockets.begin(), clientSockets.end(), clientSocket), clientSockets.end()); 
             return;
         }
         else{
@@ -95,4 +112,13 @@ void Server::handleClient(int clientSocket){
         }
     }
     close(clientSocket);
+}
+
+
+// Send messages
+void Server::sendMessage(std::string &message){ 
+    std::lock_guard<std::mutex> lock(clientSocketsMutex); // Lock
+    for (int clientSocket : clientSockets){
+        send(clientSocket, message.c_str(), message.size(), 0);
+    }
 }
