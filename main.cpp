@@ -1,6 +1,8 @@
 #include <iostream>     
 #include "server.h"
 #include <thread>
+#include <vector>
+#include <string>
 
 int main() {
     Server server(8080);
@@ -13,7 +15,18 @@ int main() {
         if (command == "exit") {
             server.shutdownServer();
             break;
-        } else {
+        }
+        else if(command == "select client"){
+            std::cout<< "Please choose a client" << std::endl;
+            std::vector<int> connectedClients = server.getConnectedClients();
+            for (int client : connectedClients){
+                std::cout<<client<<std::endl;
+            }
+            std::string selectedClient;
+            std::getline(std::cin, selectedClient);
+            server.setClient(std::stoi(selectedClient));
+        }
+        else {
             command+="\n";
             server.sendMessage(command);
         }

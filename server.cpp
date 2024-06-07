@@ -117,8 +117,20 @@ void Server::handleClient(int clientSocket){
 
 // Send messages
 void Server::sendMessage(std::string &message){ 
-    std::lock_guard<std::mutex> lock(clientSocketsMutex); // Lock
-    for (int clientSocket : clientSockets){
-        send(clientSocket, message.c_str(), message.size(), 0);
+    send(currentClientSocket, message.c_str(), message.size(), 0);
+}
+
+// SetClient to send messages to. Pass by value since we shouldnt be modifying socket
+bool Server::setClient(int clientSocket) {
+    auto it = std::find(clientSockets.begin(), clientSockets.end(), clientSocket);
+    if (it != clientSockets.end()) {
+        currentClientSocket = clientSocket;
+        return true;
     }
+    return false;
+}
+
+std::vector<int> Server::getConnectedClients()
+{
+    return clientSockets;
 }
