@@ -20,6 +20,7 @@ class Server{
         void shutdownServer();
         void handleClient(int clientSocket);
         void sendMessage(std::string &message);
+        void sendMessage(std::string &message, int clientSocket);
         static void handleSignal(int signal);
         std::vector<int> getConnectedClients();
         bool setClient(int clientSocket);

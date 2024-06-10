@@ -64,7 +64,9 @@ bool Server::startServer(){
         char clientIP[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(clientAddress.sin_addr), clientIP, INET_ADDRSTRLEN);
         std::cout<< "New Connection from IP:" << clientAddress.sin_addr.s_addr << " PORT " << clientAddress.sin_port << std::endl;
-
+        
+        std::string welcome_message = "Connected To Server \n";
+        sendMessage(welcome_message, clientSocket);
         std::thread clientThread (&Server::handleClient,this, clientSocket);
         clientThread.detach();        
     }
@@ -108,7 +110,7 @@ void Server::handleClient(int clientSocket){
             return;
         }
         else{
-            std::cout<< "Received Message: " << buffer <<std::endl;
+            std::cout<< "Socket " << clientSocket << " incoming Message: " << buffer;
         }
     }
     close(clientSocket);
@@ -118,6 +120,11 @@ void Server::handleClient(int clientSocket){
 // Send messages
 void Server::sendMessage(std::string &message){ 
     send(currentClientSocket, message.c_str(), message.size(), 0);
+}
+
+//Send messages given client fd
+void Server::sendMessage(std::string &message, int clientSocket){
+    send(clientSocket, message.c_str(), message.size(), 0);
 }
 
 // SetClient to send messages to. Pass by value since we shouldnt be modifying socket
