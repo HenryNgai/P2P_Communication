@@ -7,7 +7,7 @@ Minimalistic application that allows anyone on the same network to discover and 
 
 - Handle incoming requests (Multithread) :heavy_check_mark:
 - Implement sending messages to clients (broadcast) :heavy_check_mark:
-- Implement sending messages to specific clients
+- Implement sending messages to specific clients :heavy_check_mark:
 - Discovery mechanism
 - Encryption..?
 - Games..?
